@@ -21,7 +21,7 @@ def main(page: ft.Page):
 
     def click(e):
         nonlocal expression
-        expression += e.control.text
+        expression += e.control.data
         update()
 
     def clear(e):
@@ -41,11 +41,13 @@ def main(page: ft.Page):
             )
         except:
             expression = "Error"
+
         update()
 
     def make_button(text, color="#333333", func=click):
         return ft.ElevatedButton(
             text,
+            data=text,
             width=70,
             height=70,
             style=ft.ButtonStyle(
@@ -77,7 +79,7 @@ def main(page: ft.Page):
                 make_button("7"),
                 make_button("8"),
                 make_button("9"),
-                make_button("-","#ff9500"),
+                make_button("-", "#ff9500"),
             ]
         ),
 
@@ -86,7 +88,7 @@ def main(page: ft.Page):
                 make_button("4"),
                 make_button("5"),
                 make_button("6"),
-                make_button("+","#ff9500"),
+                make_button("+", "#ff9500"),
             ]
         ),
 
@@ -95,7 +97,7 @@ def main(page: ft.Page):
                 make_button("1"),
                 make_button("2"),
                 make_button("3"),
-                make_button("=","#ff9500", calculate),
+                make_button("=", "#ff9500", calculate),
             ]
         ),
 
