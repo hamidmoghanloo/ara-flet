@@ -1,16 +1,29 @@
-# This is a sample Python script.
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+    print("\nماشین حساب")
+    print("1. جمع")
+    print("2. تفریق")
+    print("3. ضرب")
+    print("4. تقسیم")
+    print("5. خروج")
 
+    choice = input("انتخاب: ")
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    if choice == "5":
+        break
 
+    a = float(input("عدد اول: "))
+    b = float(input("عدد دوم: "))
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    if choice == "1":
+        print("نتیجه:", a + b)
+    elif choice == "2":
+        print("نتیجه:", a - b
+    elif choice == "3":
+        print("نتیجه:", a * b)
+    elif choice == "4":
+        if b != 0:
+            print("نتیجه:", a / b)
+        else:
+            print("تقسیم بر صفر مجاز نیست.")
+    else:
+        print("انتخاب نامعتبر.")
