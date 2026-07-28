@@ -1,16 +1,54 @@
-# This is a sample Python script.
+# pip install flet
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+import flet as ft
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def main(page: ft.Page):
+    page.title = "Flet Calculator"
+    page.window.width = 320
+    page.window.height = 450
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    result = ft.Text(value="0", size=32, color=ft.Colors.WHITE)
+
+    def button_click(e):
+        data = e.control.data
+        current = result.value
+
+        if data == "C":
+            result.value = "0"
+        elif data == "=":
+            try:
+                result.value = str(eval(current))
+            except Exception:
+                result.value = "Error"
+        else:
+            if current == "0":
+                result.value = data
+            else:
+                result.value = current + data
+
+        page.update()
+
+    def btn(label):
+        return ft.ElevatedButton(
+            label,
+            data=label,
+            on_click=button_click,
+            expand=True,
+        )
+
+    page.add(
+        ft.Container(
+            content=result,
+            alignment=ft.Alignment.CENTER_RIGHT,
+            padding=20,
+            bgcolor=ft.Colors.BLACK,
+        ),
+        ft.Row([btn("7"), btn("8"), btn("9"), btn("/")]),
+        ft.Row([btn("4"), btn("5"), btn("6"), btn("*")]),
+        ft.Row([btn("1"), btn("2"), btn("3"), btn("-")]),
+        ft.Row([btn("C"), btn("0"), btn("="), btn("+")]),
+    )
+
+
+ft.app(target=main)
