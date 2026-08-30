@@ -1,3 +1,4 @@
+
 import flet as ft
 
 
@@ -13,10 +14,12 @@ users = {
 def main(page: ft.Page):
 
     page.title = "Authentication App"
-    page.window_width = 400
-    page.window_height = 650
-    page.window_resizable = False
-    page.padding = 30
+
+    page.window.width = 900
+    page.window.height = 650
+    page.window.resizable = False
+
+    page.padding = 0
 
     # =========================
     # Helper
@@ -27,49 +30,391 @@ def main(page: ft.Page):
             content=ft.Text(text),
             bgcolor=color
         )
+
         page.snack_bar.open = True
         page.update()
 
     # =========================
-    # Welcome Page
+    # Dashboard Page
     # =========================
 
-    def welcome_page(username):
+    def dashboard_page(username):
 
         page.clean()
 
-        page.add(
-            ft.Column(
+        # =========================
+        # Sidebar
+        # =========================
+
+        sidebar = ft.Container(
+            width=220,
+            bgcolor=ft.Colors.BLUE_GREY_900,
+            padding=20,
+
+            content=ft.Column(
                 controls=[
-                    ft.Container(height=80),
 
                     ft.Text(
-                        "خوش آمدید 🎉",
-                        size=32,
+                        "My Dashboard",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.WHITE,
+                    ),
+
+                    ft.Divider(
+                        color=ft.Colors.WHITE24
+                    ),
+
+                    ft.Container(
+                        height=20
+                    ),
+
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.DASHBOARD,
+                            color=ft.Colors.WHITE
+                        ),
+
+                        title=ft.Text(
+                            "داشبورد",
+                            color=ft.Colors.WHITE
+                        ),
+                    ),
+
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.PERSON,
+                            color=ft.Colors.WHITE
+                        ),
+
+                        title=ft.Text(
+                            "پروفایل",
+                            color=ft.Colors.WHITE
+                        ),
+                    ),
+
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.SETTINGS,
+                            color=ft.Colors.WHITE
+                        ),
+
+                        title=ft.Text(
+                            "تنظیمات",
+                            color=ft.Colors.WHITE
+                        ),
+                    ),
+
+                    ft.Container(
+                        expand=True
+                    ),
+
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.LOGOUT,
+                            color=ft.Colors.WHITE
+                        ),
+
+                        title=ft.Text(
+                            "خروج",
+                            color=ft.Colors.WHITE
+                        ),
+
+                        on_click=lambda e: login_page(),
+                    ),
+                ]
+            )
+        )
+
+        # =========================
+        # Header
+        # =========================
+
+        header = ft.Container(
+            height=80,
+
+            padding=ft.Padding(
+                left=30,
+                right=30,
+                top=0,
+                bottom=0,
+            ),
+
+            content=ft.Row(
+                controls=[
+
+                    ft.Column(
+                        controls=[
+
+                            ft.Text(
+                                "داشبورد",
+                                size=28,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+
+                            ft.Text(
+                                f"خوش آمدی {username} 👋",
+                                size=14,
+                                color=ft.Colors.GREY_600,
+                            ),
+                        ],
+
+                        spacing=3,
+                    ),
+
+                    ft.Container(
+                        expand=True
+                    ),
+
+                    ft.CircleAvatar(
+                        content=ft.Icon(
+                            ft.Icons.PERSON
+                        ),
+                        radius=23,
+                    ),
+                ]
+            )
+        )
+
+        # =========================
+        # Statistics Card 1
+        # =========================
+
+        card1 = ft.Container(
+            expand=True,
+            padding=20,
+            bgcolor=ft.Colors.BLUE_50,
+            border_radius=15,
+
+            content=ft.Column(
+                controls=[
+
+                    ft.Icon(
+                        ft.Icons.PEOPLE,
+                        size=35,
+                        color=ft.Colors.BLUE,
+                    ),
+
+                    ft.Text(
+                        "کاربران",
+                        size=15,
+                    ),
+
+                    ft.Text(
+                        "120",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                ]
+            )
+        )
+
+        # =========================
+        # Statistics Card 2
+        # =========================
+
+        card2 = ft.Container(
+            expand=True,
+            padding=20,
+            bgcolor=ft.Colors.GREEN_50,
+            border_radius=15,
+
+            content=ft.Column(
+                controls=[
+
+                    ft.Icon(
+                        ft.Icons.TASK_ALT,
+                        size=35,
+                        color=ft.Colors.GREEN,
+                    ),
+
+                    ft.Text(
+                        "وظایف انجام شده",
+                        size=15,
+                    ),
+
+                    ft.Text(
+                        "85",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                ]
+            )
+        )
+
+        # =========================
+        # Statistics Card 3
+        # =========================
+
+        card3 = ft.Container(
+            expand=True,
+            padding=20,
+            bgcolor=ft.Colors.ORANGE_50,
+            border_radius=15,
+
+            content=ft.Column(
+                controls=[
+
+                    ft.Icon(
+                        ft.Icons.NOTIFICATIONS,
+                        size=35,
+                        color=ft.Colors.ORANGE,
+                    ),
+
+                    ft.Text(
+                        "اعلان‌ها",
+                        size=15,
+                    ),
+
+                    ft.Text(
+                        "12",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                ]
+            )
+        )
+
+        # =========================
+        # Statistics
+        # =========================
+
+        statistics = ft.Row(
+            controls=[
+                card1,
+                card2,
+                card3,
+            ],
+
+            spacing=20,
+        )
+
+        # =========================
+        # Recent Activity
+        # =========================
+
+        recent_activity = ft.Container(
+            margin=ft.Margin(
+                left=0,
+                right=0,
+                top=25,
+                bottom=0,
+            ),
+
+            padding=20,
+
+            bgcolor=ft.Colors.WHITE,
+
+            border_radius=15,
+
+            content=ft.Column(
+                controls=[
+
+                    ft.Text(
+                        "فعالیت‌های اخیر",
+                        size=20,
                         weight=ft.FontWeight.BOLD,
                     ),
 
-                    ft.Text(
-                        f"سلام {username} 👋",
-                        size=22,
+                    ft.Divider(),
+
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.LOGIN,
+                            color=ft.Colors.GREEN,
+                        ),
+
+                        title=ft.Text(
+                            "ورود موفق به حساب کاربری"
+                        ),
+
+                        subtitle=ft.Text(
+                            "همین الان"
+                        ),
                     ),
 
-                    ft.Text(
-                        "با موفقیت وارد حساب کاربری شدید.",
-                        size=16,
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.PERSON_ADD,
+                            color=ft.Colors.BLUE,
+                        ),
+
+                        title=ft.Text(
+                            "ایجاد حساب کاربری"
+                        ),
+
+                        subtitle=ft.Text(
+                            "امروز"
+                        ),
                     ),
 
-                    ft.Container(height=30),
+                    ft.ListTile(
+                        leading=ft.Icon(
+                            ft.Icons.SETTINGS,
+                            color=ft.Colors.ORANGE,
+                        ),
 
-                    ft.ElevatedButton(
-                        "خروج",
-                        width=250,
-                        height=50,
-                        on_click=lambda e: login_page(),
+                        title=ft.Text(
+                            "به‌روزرسانی تنظیمات"
+                        ),
+
+                        subtitle=ft.Text(
+                            "دیروز"
+                        ),
+                    ),
+                ]
+            )
+        )
+
+        # =========================
+        # Main Content
+        # =========================
+
+        main_content = ft.Container(
+            expand=True,
+
+            bgcolor=ft.Colors.GREY_100,
+
+            content=ft.Column(
+                controls=[
+
+                    header,
+
+                    ft.Container(
+
+                        padding=ft.Padding(
+                            left=30,
+                            right=30,
+                            top=0,
+                            bottom=0,
+                        ),
+
+                        content=ft.Column(
+                            controls=[
+                                statistics,
+                                recent_activity,
+                            ]
+                        )
                     ),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=20,
+
+                spacing=0,
+            )
+        )
+
+        # =========================
+        # Final Dashboard Layout
+        # =========================
+
+        page.add(
+            ft.Row(
+                controls=[
+                    sidebar,
+                    main_content,
+                ],
+
+                spacing=0,
+                expand=True,
             )
         )
 
@@ -92,23 +437,34 @@ def main(page: ft.Page):
         password = ft.TextField(
             label="رمز عبور",
             hint_text="رمز عبور خود را وارد کنید",
+
             password=True,
             can_reveal_password=True,
+
             width=300,
         )
+
+        # =========================
+        # Login Function
+        # =========================
 
         def login(e):
 
             user = username.value.strip()
+
             passw = password.value
 
             if not user or not passw:
-                show_message("لطفاً همه فیلدها را پر کنید.")
+
+                show_message(
+                    "لطفاً همه فیلدها را پر کنید."
+                )
+
                 return
 
             if user in users and users[user] == passw:
 
-                welcome_page(user)
+                dashboard_page(user)
 
             else:
 
@@ -116,10 +472,17 @@ def main(page: ft.Page):
                     "نام کاربری یا رمز عبور اشتباه است."
                 )
 
+        # =========================
+        # Login UI
+        # =========================
+
         page.add(
             ft.Column(
                 controls=[
-                    ft.Container(height=50),
+
+                    ft.Container(
+                        height=50
+                    ),
 
                     ft.Text(
                         "ورود",
@@ -132,26 +495,36 @@ def main(page: ft.Page):
                         size=16,
                     ),
 
-                    ft.Container(height=30),
+                    ft.Container(
+                        height=30
+                    ),
 
                     username,
+
                     password,
 
-                    ft.Container(height=10),
+                    ft.Container(
+                        height=10
+                    ),
 
                     ft.ElevatedButton(
                         "ورود",
+
                         width=300,
                         height=50,
+
                         on_click=login,
                     ),
 
                     ft.TextButton(
                         "حساب کاربری ندارید؟ ثبت نام کنید",
+
                         on_click=lambda e: register_page(),
                     ),
                 ],
+
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+
                 spacing=15,
             )
         )
@@ -169,62 +542,81 @@ def main(page: ft.Page):
         username = ft.TextField(
             label="نام کاربری",
             hint_text="یک نام کاربری انتخاب کنید",
+
             width=300,
         )
 
         password = ft.TextField(
             label="رمز عبور",
             hint_text="رمز عبور خود را وارد کنید",
+
             password=True,
             can_reveal_password=True,
+
             width=300,
         )
 
         confirm_password = ft.TextField(
             label="تکرار رمز عبور",
             hint_text="رمز عبور را دوباره وارد کنید",
+
             password=True,
             can_reveal_password=True,
+
             width=300,
         )
+
+        # =========================
+        # Register Function
+        # =========================
 
         def register(e):
 
             user = username.value.strip()
+
             passw = password.value
+
             confirm = confirm_password.value
 
-            # بررسی خالی نبودن
             if not user or not passw or not confirm:
+
                 show_message(
                     "لطفاً همه فیلدها را پر کنید."
                 )
+
                 return
 
-            # بررسی تکراری نبودن username
             if user in users:
+
                 show_message(
                     "این نام کاربری قبلاً ثبت شده است."
                 )
+
                 return
 
-            # بررسی رمز عبور
             if passw != confirm:
+
                 show_message(
                     "رمزهای عبور یکسان نیستند."
                 )
+
                 return
 
-            # ذخیره در حافظه
             users[user] = passw
 
-            # رفتن به Welcome
-            welcome_page(user)
+            dashboard_page(user)
+
+        # =========================
+        # Register UI
+        # =========================
 
         page.add(
             ft.Column(
                 controls=[
-                    ft.Container(height=30),
+
+                    ft.Container(
+                        height=30
+                    ),
 
                     ft.Text(
                         "ثبت نام",
@@ -237,27 +629,38 @@ def main(page: ft.Page):
                         size=16,
                     ),
 
-                    ft.Container(height=25),
+                    ft.Container(
+                        height=25
+                    ),
 
                     username,
+
                     password,
+
                     confirm_password,
 
-                    ft.Container(height=10),
+                    ft.Container(
+                        height=10
+                    ),
 
                     ft.ElevatedButton(
                         "ثبت نام",
+
                         width=300,
                         height=50,
+
                         on_click=register,
                     ),
 
                     ft.TextButton(
                         "قبلاً حساب دارید؟ ورود",
+
                         on_click=lambda e: login_page(),
                     ),
                 ],
+
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+
                 spacing=15,
             )
         )
@@ -265,10 +668,15 @@ def main(page: ft.Page):
         page.update()
 
     # =========================
-    # Start App
+    # Start Application
     # =========================
 
     login_page()
 
 
+# =========================
+# Run App
+# =========================
+
 ft.app(target=main)
+
