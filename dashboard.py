@@ -1,455 +1,11 @@
 import flet as ft
-from profile_ import profile_page
-
-
-# =========================================================
-# In-Memory Users
-# =========================================================
-
-users = {}
-
-
-# =========================================================
-# Main
-# =========================================================
-
-def main(page: ft.Page):
-
-    page.title = "Login App"
-    page.bgcolor = "#F5F7FB"
-    page.padding = 0
-
-
-    # =====================================================
-    # Show Message
-    # =====================================================
-
-    def show_message(message, color="#EF4444"):
-
-        page.show_dialog(
-            ft.SnackBar(
-                content=ft.Text(
-                    message,
-                    color="white",
-                ),
-                bgcolor=color,
-            )
-        )
-
-
-    # =====================================================
-    # Create Input
-    # =====================================================
-
-    def create_input(
-        label,
-        hint="",
-        password=False,
-        keyboard_type=None,
-    ):
-
-        return ft.TextField(
-            label=label,
-            hint_text=hint,
-            password=password,
-            can_reveal_password=password,
-            keyboard_type=keyboard_type,
-            text_align=ft.TextAlign.RIGHT,
-            border_radius=10,
-            border_color="#D1D5DB",
-            focused_border_color="#4F46E5",
-            bgcolor="white",
-        )
-
-
-    # =====================================================
-    # Page Container
-    # =====================================================
-
-    def page_container(content):
-
-        return ft.Container(
-            expand=True,
-            alignment=ft.Alignment.CENTER,
-            padding=20,
-
-            content=ft.Container(
-                width=420,
-                padding=35,
-                border_radius=20,
-                bgcolor="white",
-
-                shadow=ft.BoxShadow(
-                    spread_radius=1,
-                    blur_radius=20,
-                    color="#22000000",
-                ),
-
-                content=content,
-            ),
-        )
-
-
-    # =====================================================
-    # LOGIN PAGE
-    # =====================================================
-
-    def login_page():
-
-        email = create_input(
-            "ایمیل",
-            "example@gmail.com",
-            keyboard_type=ft.KeyboardType.EMAIL,
-        )
-
-        password = create_input(
-            "رمز عبور",
-            "رمز عبور خود را وارد کنید",
-            password=True,
-        )
-
-
-        def login(e):
-
-            email_value = email.value.strip().lower()
-            password_value = password.value
-
-
-            if not email_value or not password_value:
-
-                show_message(
-                    "لطفاً ایمیل و رمز عبور را وارد کنید."
-                )
-
-                return
-
-
-            if email_value not in users:
-
-                show_message(
-                    "این حساب وجود ندارد. ابتدا ثبت نام کنید."
-                )
-
-                return
-
-
-            if users[email_value]["password"] != password_value:
-
-                show_message(
-                    "رمز عبور اشتباه است."
-                )
-
-                return
-
-
-            # ورود به پروفایل
-            profile_page(
-                page,
-                users[email_value],
-                email_value,
-                show_message,
-            )
-
-
-        def go_register(e):
-
-            register_page()
-
-
-        content = ft.Column(
-
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-
-            spacing=15,
-
-            controls=[
-
-                ft.Icon(
-                    ft.Icons.LOCK_PERSON,
-                    size=65,
-                    color="#4F46E5",
-                ),
-
-                ft.Text(
-                    "ورود",
-                    size=30,
-                    weight=ft.FontWeight.BOLD,
-                    color="#111827",
-                ),
-
-                ft.Text(
-                    "وارد حساب کاربری خود شوید",
-                    size=14,
-                    color="#6B7280",
-                ),
-
-                ft.Container(height=10),
-
-                email,
-
-                password,
-
-                ft.ElevatedButton(
-                    "ورود",
-                    width=300,
-                    height=50,
-                    bgcolor="#4F46E5",
-                    color="white",
-                    on_click=login,
-                ),
-
-                ft.Row(
-
-                    alignment=ft.MainAxisAlignment.CENTER,
-
-                    controls=[
-
-                        ft.Text(
-                            "حساب کاربری ندارید؟",
-                            color="#6B7280",
-                        ),
-
-                        ft.TextButton(
-                            "ثبت نام",
-                            on_click=go_register,
-                        ),
-                    ],
-                ),
-            ],
-        )
-
-
-        page.controls.clear()
-
-        page.controls.append(
-            page_container(content)
-        )
-
-        page.update()
-
-
-    # =====================================================
-    # REGISTER PAGE
-    # =====================================================
-
-    def register_page():
-
-        name = create_input(
-            "نام",
-            "نام خود را وارد کنید",
-        )
-
-        email = create_input(
-            "ایمیل",
-            "example@gmail.com",
-            keyboard_type=ft.KeyboardType.EMAIL,
-        )
-
-        password = create_input(
-            "رمز عبور",
-            "حداقل 4 کاراکتر",
-            password=True,
-        )
-
-        confirm_password = create_input(
-            "تکرار رمز عبور",
-            "رمز عبور را دوباره وارد کنید",
-            password=True,
-        )
-
-
-        def register(e):
-
-            name_value = name.value.strip()
-            email_value = email.value.strip().lower()
-            password_value = password.value
-            confirm_value = confirm_password.value
-
-
-            if not name_value:
-
-                show_message(
-                    "لطفاً نام خود را وارد کنید."
-                )
-
-                return
-
-
-            if not email_value:
-
-                show_message(
-                    "لطفاً ایمیل خود را وارد کنید."
-                )
-
-                return
-
-
-            if "@" not in email_value:
-
-                show_message(
-                    "ایمیل وارد شده معتبر نیست."
-                )
-
-                return
-
-
-            if len(password_value) < 4:
-
-                show_message(
-                    "رمز عبور باید حداقل 4 کاراکتر باشد."
-                )
-
-                return
-
-
-            if password_value != confirm_value:
-
-                show_message(
-                    "رمز عبور و تکرار آن یکسان نیستند."
-                )
-
-                return
-
-
-            if email_value in users:
-
-                show_message(
-                    "این ایمیل قبلاً ثبت نام کرده است."
-                )
-
-                return
-
-
-            # ساخت کاربر
-            users[email_value] = {
-
-                "name": name_value,
-
-                "password": password_value,
-
-                # اطلاعات پروفایل
-                "first_name": "",
-                "last_name": "",
-                "username": "",
-                "phone": "",
-                "age": "",
-            }
-
-
-            # بعد از ثبت نام → پروفایل
-            profile_page(
-                page,
-                users[email_value],
-                email_value,
-                show_message,
-            )
-
-
-        def go_login(e):
-
-            login_page()
-
-
-        content = ft.Column(
-
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-
-            spacing=14,
-
-            controls=[
-
-                ft.Icon(
-                    ft.Icons.PERSON_ADD,
-                    size=65,
-                    color="#4F46E5",
-                ),
-
-                ft.Text(
-                    "ثبت نام",
-                    size=30,
-                    weight=ft.FontWeight.BOLD,
-                    color="#111827",
-                ),
-
-                ft.Text(
-                    "یک حساب کاربری جدید بسازید",
-                    size=14,
-                    color="#6B7280",
-                ),
-
-                name,
-
-                email,
-
-                password,
-
-                confirm_password,
-
-                ft.ElevatedButton(
-                    "ثبت نام",
-                    width=300,
-                    height=50,
-                    bgcolor="#4F46E5",
-                    color="white",
-                    on_click=register,
-                ),
-
-                ft.Row(
-
-                    alignment=ft.MainAxisAlignment.CENTER,
-
-                    controls=[
-
-                        ft.Text(
-                            "قبلاً حساب دارید؟",
-                            color="#6B7280",
-                        ),
-
-                        ft.TextButton(
-                            "ورود",
-                            on_click=go_login,
-                        ),
-                    ],
-                ),
-            ],
-        )
-
-
-        page.controls.clear()
-
-        page.controls.append(
-            page_container(content)
-        )
-
-        page.update()
-
-
-    # =====================================================
-    # Start
-    # =====================================================
-
-    login_page()
-
-
-# =========================================================
-# Run
-# =========================================================
-
-if __name__ == "__main__":
-    ft.run(main)
-import flet as ft
 
 
 # =========================================================
 # Dashboard Page
 # =========================================================
 
-def dashboard_page(
-    page,
-    user,
-    email,
-    show_message,
-):
+def dashboard_page(page, user, email, show_message):
 
     # =====================================================
     # User Information
@@ -461,28 +17,23 @@ def dashboard_page(
     phone = user.get("phone", "")
     age = user.get("age", "")
 
-
     # =====================================================
     # Colors
     # =====================================================
 
     PRIMARY = "#4F46E5"
-    PRIMARY_DARK = "#3730A3"
-
+    DARK = "#111827"
     SIDEBAR = "#111827"
-
     BACKGROUND = "#F3F4F6"
-
     WHITE = "#FFFFFF"
-
-    TEXT = "#111827"
-    TEXT_GRAY = "#6B7280"
-
+    GRAY = "#6B7280"
+    LIGHT_BORDER = "#E5E7EB"
     RED = "#EF4444"
-
+    GREEN = "#16A34A"
+    ORANGE = "#F59E0B"
 
     # =====================================================
-    # Content Area
+    # Central Content
     # =====================================================
 
     content_area = ft.Container(
@@ -491,42 +42,36 @@ def dashboard_page(
         padding=25,
     )
 
-
     # =====================================================
-    # Dashboard Content
+    # Dashboard Page
     # =====================================================
 
     def show_dashboard(e=None):
 
-        # -------------------------------------------------
-        # Information Table
-        # -------------------------------------------------
+        # -----------------------------------------------
+        # User Table
+        # -----------------------------------------------
 
-        table = ft.DataTable(
-
-            column_spacing=50,
+        user_table = ft.DataTable(
+            column_spacing=60,
 
             columns=[
-
                 ft.DataColumn(
                     ft.Text(
                         "عنوان",
                         weight=ft.FontWeight.BOLD,
-                        color=TEXT,
                     )
                 ),
 
                 ft.DataColumn(
                     ft.Text(
-                        "اطلاعات",
+                        "اطلاعات کاربر",
                         weight=ft.FontWeight.BOLD,
-                        color=TEXT,
                     )
                 ),
             ],
 
             rows=[
-
                 ft.DataRow(
                     cells=[
                         ft.DataCell(
@@ -584,125 +129,125 @@ def dashboard_page(
             ],
         )
 
-
-        # -------------------------------------------------
-        # Dashboard Cards
-        # -------------------------------------------------
+        # -----------------------------------------------
+        # Card 1
+        # -----------------------------------------------
 
         card1 = ft.Container(
             expand=True,
             padding=20,
-            border_radius=15,
             bgcolor=WHITE,
+            border_radius=15,
 
             shadow=ft.BoxShadow(
                 blur_radius=10,
-                color="#18000000",
+                color="#20000000",
             ),
 
             content=ft.Column(
                 controls=[
-
                     ft.Icon(
                         ft.Icons.PERSON,
-                        color=PRIMARY,
                         size=35,
+                        color=PRIMARY,
                     ),
 
                     ft.Text(
-                        "نام کاربر",
-                        color=TEXT_GRAY,
+                        "نام",
+                        color=GRAY,
                     ),
 
                     ft.Text(
                         first_name,
                         size=20,
                         weight=ft.FontWeight.BOLD,
-                        color=TEXT,
+                        color=DARK,
                     ),
-                ],
+                ]
             ),
         )
 
+        # -----------------------------------------------
+        # Card 2
+        # -----------------------------------------------
 
         card2 = ft.Container(
             expand=True,
             padding=20,
-            border_radius=15,
             bgcolor=WHITE,
+            border_radius=15,
 
             shadow=ft.BoxShadow(
                 blur_radius=10,
-                color="#18000000",
+                color="#20000000",
             ),
 
             content=ft.Column(
                 controls=[
-
                     ft.Icon(
                         ft.Icons.ACCOUNT_CIRCLE,
-                        color="#16A34A",
                         size=35,
+                        color=GREEN,
                     ),
 
                     ft.Text(
                         "نام کاربری",
-                        color=TEXT_GRAY,
+                        color=GRAY,
                     ),
 
                     ft.Text(
                         username,
                         size=20,
                         weight=ft.FontWeight.BOLD,
-                        color=TEXT,
+                        color=DARK,
                     ),
-                ],
+                ]
             ),
         )
 
+        # -----------------------------------------------
+        # Card 3
+        # -----------------------------------------------
 
         card3 = ft.Container(
             expand=True,
             padding=20,
-            border_radius=15,
             bgcolor=WHITE,
+            border_radius=15,
 
             shadow=ft.BoxShadow(
                 blur_radius=10,
-                color="#18000000",
+                color="#20000000",
             ),
 
             content=ft.Column(
                 controls=[
-
                     ft.Icon(
                         ft.Icons.PHONE,
-                        color="#F59E0B",
                         size=35,
+                        color=ORANGE,
                     ),
 
                     ft.Text(
                         "شماره تماس",
-                        color=TEXT_GRAY,
+                        color=GRAY,
                     ),
 
                     ft.Text(
                         phone,
                         size=18,
                         weight=ft.FontWeight.BOLD,
-                        color=TEXT,
+                        color=DARK,
                     ),
-                ],
+                ]
             ),
         )
 
-
-        # -------------------------------------------------
-        # Dashboard Layout
-        # -------------------------------------------------
+        # -----------------------------------------------
+        # Main Dashboard
+        # -----------------------------------------------
 
         dashboard_content = ft.Column(
-
             scroll=ft.ScrollMode.AUTO,
 
             controls=[
@@ -711,17 +256,18 @@ def dashboard_page(
                     "داشبورد",
                     size=30,
                     weight=ft.FontWeight.BOLD,
-                    color=TEXT,
+                    color=DARK,
                 ),
 
                 ft.Text(
                     f"خوش آمدید {first_name} 👋",
                     size=16,
-                    color=TEXT_GRAY,
+                    color=GRAY,
                 ),
 
-                ft.Container(height=15),
-
+                ft.Container(
+                    height=15
+                ),
 
                 # Cards
                 ft.Row(
@@ -734,60 +280,53 @@ def dashboard_page(
                     ],
                 ),
 
-
-                ft.Container(height=25),
-
-
-                # User information
                 ft.Container(
+                    height=25
+                ),
 
+                # Information Box
+                ft.Container(
                     padding=25,
-
-                    border_radius=15,
-
                     bgcolor=WHITE,
+                    border_radius=15,
 
                     shadow=ft.BoxShadow(
                         blur_radius=10,
-                        color="#18000000",
+                        color="#20000000",
                     ),
 
                     content=ft.Column(
-
                         controls=[
 
                             ft.Text(
                                 "اطلاعات کاربر",
                                 size=22,
                                 weight=ft.FontWeight.BOLD,
-                                color=TEXT,
+                                color=DARK,
                             ),
 
                             ft.Container(
                                 height=10
                             ),
 
-                            table,
-                        ],
+                            user_table,
+                        ]
                     ),
                 ),
             ],
         )
 
-
         content_area.content = dashboard_content
 
         page.update()
 
-
     # =====================================================
-    # Profile Content
+    # Profile Page
     # =====================================================
 
     def show_profile(e=None):
 
         profile_content = ft.Column(
-
             scroll=ft.ScrollMode.AUTO,
 
             controls=[
@@ -796,31 +335,29 @@ def dashboard_page(
                     "پروفایل کاربری",
                     size=30,
                     weight=ft.FontWeight.BOLD,
-                    color=TEXT,
+                    color=DARK,
                 ),
 
                 ft.Text(
-                    "اطلاعات حساب کاربری شما",
-                    color=TEXT_GRAY,
+                    "اطلاعات حساب کاربری",
+                    color=GRAY,
                 ),
 
-                ft.Container(height=20),
+                ft.Container(
+                    height=20
+                ),
 
                 ft.Container(
-
                     padding=30,
-
-                    border_radius=15,
-
                     bgcolor=WHITE,
+                    border_radius=15,
 
                     shadow=ft.BoxShadow(
                         blur_radius=10,
-                        color="#18000000",
+                        color="#20000000",
                     ),
 
                     content=ft.Column(
-
                         horizontal_alignment=
                         ft.CrossAxisAlignment.CENTER,
 
@@ -836,15 +373,17 @@ def dashboard_page(
                                 f"{first_name} {last_name}",
                                 size=25,
                                 weight=ft.FontWeight.BOLD,
-                                color=TEXT,
+                                color=DARK,
                             ),
 
                             ft.Text(
                                 f"@{username}",
-                                color=TEXT_GRAY,
+                                color=GRAY,
                             ),
 
-                            ft.Divider(),
+                            ft.Divider(
+                                color=LIGHT_BORDER
+                            ),
 
                             ft.Text(
                                 f"ایمیل: {email}",
@@ -870,17 +409,14 @@ def dashboard_page(
 
         page.update()
 
-
     # =====================================================
-    # Reports Content
+    # Reports Page
     # =====================================================
 
     def show_reports(e=None):
 
         reports_content = ft.Column(
-
-            horizontal_alignment=
-            ft.CrossAxisAlignment.CENTER,
+            scroll=ft.ScrollMode.AUTO,
 
             controls=[
 
@@ -888,60 +424,68 @@ def dashboard_page(
                     "گزارشات",
                     size=30,
                     weight=ft.FontWeight.BOLD,
-                    color=TEXT,
+                    color=DARK,
                 ),
 
-                ft.Container(height=20),
+                ft.Text(
+                    "گزارش اطلاعات کاربر",
+                    color=GRAY,
+                ),
 
                 ft.Container(
+                    height=20
+                ),
 
-                    width=500,
-
-                    padding=40,
-
-                    border_radius=15,
-
+                ft.Container(
+                    padding=30,
                     bgcolor=WHITE,
+                    border_radius=15,
 
                     shadow=ft.BoxShadow(
                         blur_radius=10,
-                        color="#18000000",
+                        color="#20000000",
                     ),
 
                     content=ft.Column(
-
-                        horizontal_alignment=
-                        ft.CrossAxisAlignment.CENTER,
-
                         controls=[
 
-                            ft.Icon(
-                                ft.Icons.BAR_CHART,
-                                size=80,
-                                color=PRIMARY,
+                            ft.Row(
+                                controls=[
+
+                                    ft.Icon(
+                                        ft.Icons.BAR_CHART,
+                                        size=40,
+                                        color=PRIMARY,
+                                    ),
+
+                                    ft.Text(
+                                        "گزارش کاربر",
+                                        size=22,
+                                        weight=ft.FontWeight.BOLD,
+                                    ),
+                                ]
+                            ),
+
+                            ft.Divider(),
+
+                            ft.Text(
+                                f"نام: {first_name}"
                             ),
 
                             ft.Text(
-                                "گزارش اطلاعات کاربر",
-                                size=22,
-                                weight=ft.FontWeight.BOLD,
+                                f"نام خانوادگی: {last_name}"
                             ),
 
                             ft.Text(
-                                "اطلاعات ثبت شده با موفقیت دریافت شد.",
-                                color=TEXT_GRAY,
+                                f"نام کاربری: {username}"
                             ),
 
                             ft.Text(
-                                f"نام: {first_name}",
+                                f"سن: {age}"
                             ),
 
                             ft.Text(
-                                f"سن: {age}",
-                            ),
-
-                            ft.Text(
-                                f"شماره تماس: {phone}",
+                                f"شماره تماس: {phone}"
                             ),
                         ],
                     ),
@@ -953,14 +497,14 @@ def dashboard_page(
 
         page.update()
 
-
     # =====================================================
-    # Settings Content
+    # Settings Page
     # =====================================================
 
     def show_settings(e=None):
 
         settings_content = ft.Column(
+            scroll=ft.ScrollMode.AUTO,
 
             controls=[
 
@@ -968,31 +512,39 @@ def dashboard_page(
                     "تنظیمات",
                     size=30,
                     weight=ft.FontWeight.BOLD,
-                    color=TEXT,
+                    color=DARK,
                 ),
 
-                ft.Container(height=20),
+                ft.Text(
+                    "تنظیمات حساب کاربری",
+                    color=GRAY,
+                ),
 
                 ft.Container(
+                    height=20
+                ),
 
+                ft.Container(
                     padding=25,
-
+                    bgcolor=WHITE,
                     border_radius=15,
 
-                    bgcolor=WHITE,
+                    shadow=ft.BoxShadow(
+                        blur_radius=10,
+                        color="#20000000",
+                    ),
 
                     content=ft.Column(
-
                         controls=[
 
                             ft.Text(
-                                "تنظیمات حساب کاربری",
+                                "تنظیمات برنامه",
                                 size=20,
                                 weight=ft.FontWeight.BOLD,
                             ),
 
                             ft.Switch(
-                                label="فعال بودن اعلان‌ها",
+                                label="اعلان‌ها",
                                 value=True,
                             ),
 
@@ -1010,7 +562,6 @@ def dashboard_page(
 
         page.update()
 
-
     # =====================================================
     # Logout
     # =====================================================
@@ -1020,17 +571,12 @@ def dashboard_page(
         page.controls.clear()
 
         page.controls.append(
-
             ft.Container(
-
                 expand=True,
-
+                bgcolor=BACKGROUND,
                 alignment=ft.Alignment.CENTER,
 
-                bgcolor=BACKGROUND,
-
                 content=ft.Column(
-
                     horizontal_alignment=
                     ft.CrossAxisAlignment.CENTER,
 
@@ -1043,14 +589,14 @@ def dashboard_page(
                         ),
 
                         ft.Text(
-                            "از حساب کاربری خارج شدید.",
-                            size=22,
+                            "خروج از حساب",
+                            size=25,
                             weight=ft.FontWeight.BOLD,
                         ),
 
                         ft.Text(
-                            "برای ورود دوباره برنامه را اجرا کنید.",
-                            color=TEXT_GRAY,
+                            "از حساب کاربری خارج شدید.",
+                            color=GRAY,
                         ),
                     ],
                 ),
@@ -1058,7 +604,6 @@ def dashboard_page(
         )
 
         page.update()
-
 
     # =====================================================
     # Sidebar Button
@@ -1068,45 +613,37 @@ def dashboard_page(
         icon,
         text,
         on_click,
-        selected=False,
     ):
 
         return ft.Container(
 
-            border_radius=10,
-
-            bgcolor=(
-                "#312E81"
-                if selected
-                else None
-            ),
-
             padding=12,
 
-            content=ft.Row(
+            border_radius=10,
 
+            ink=True,
+
+            on_click=on_click,
+
+            content=ft.Row(
                 spacing=15,
 
                 controls=[
 
                     ft.Icon(
                         icon,
-                        color=WHITE,
                         size=22,
+                        color=WHITE,
                     ),
 
                     ft.Text(
                         text,
-                        color=WHITE,
                         size=15,
+                        color=WHITE,
                     ),
                 ],
             ),
-
-            on_click=on_click,
-            ink=True,
         )
-
 
     # =====================================================
     # Sidebar
@@ -1126,16 +663,14 @@ def dashboard_page(
 
             controls=[
 
-                # -------------------------------------------------
+                # -----------------------------------------
                 # Logo
-                # -------------------------------------------------
+                # -----------------------------------------
 
                 ft.Container(
-
                     padding=15,
 
                     content=ft.Column(
-
                         horizontal_alignment=
                         ft.CrossAxisAlignment.CENTER,
 
@@ -1143,35 +678,32 @@ def dashboard_page(
 
                             ft.Icon(
                                 ft.Icons.DASHBOARD,
-                                color=WHITE,
                                 size=50,
+                                color=WHITE,
                             ),
 
                             ft.Text(
                                 "My Dashboard",
-                                color=WHITE,
                                 size=20,
                                 weight=ft.FontWeight.BOLD,
+                                color=WHITE,
                             ),
                         ],
                     ),
                 ),
 
-
                 ft.Divider(
                     color="#374151"
                 ),
 
-
-                # -------------------------------------------------
+                # -----------------------------------------
                 # Menu
-                # -------------------------------------------------
+                # -----------------------------------------
 
                 sidebar_button(
                     ft.Icons.HOME,
                     "داشبورد",
                     show_dashboard,
-                    True,
                 ),
 
                 sidebar_button(
@@ -1192,19 +724,15 @@ def dashboard_page(
                     show_settings,
                 ),
 
-
-                # فاصله
+                # فاصله تا پایین
                 ft.Container(
                     expand=True
                 ),
-
 
                 ft.Divider(
                     color="#374151"
                 ),
 
-
-                # Logout
                 sidebar_button(
                     ft.Icons.LOGOUT,
                     "خروج",
@@ -1213,7 +741,6 @@ def dashboard_page(
             ],
         ),
     )
-
 
     # =====================================================
     # Header
@@ -1225,13 +752,16 @@ def dashboard_page(
 
         bgcolor=WHITE,
 
-        padding=ft.padding.symmetric(
-            horizontal=25
+        padding=ft.Padding(
+            left=25,
+            right=25,
+            top=0,
+            bottom=0,
         ),
 
         shadow=ft.BoxShadow(
             blur_radius=8,
-            color="#18000000",
+            color="#20000000",
         ),
 
         content=ft.Row(
@@ -1241,16 +771,21 @@ def dashboard_page(
 
             controls=[
 
-                # Title
+                # -----------------------------------------
+                # Header Title
+                # -----------------------------------------
+
                 ft.Text(
                     "پنل مدیریت",
                     size=22,
                     weight=ft.FontWeight.BOLD,
-                    color=TEXT,
+                    color=DARK,
                 ),
 
-
+                # -----------------------------------------
                 # User
+                # -----------------------------------------
+
                 ft.Row(
 
                     spacing=10,
@@ -1269,26 +804,30 @@ def dashboard_page(
                                 ft.Text(
                                     f"{first_name} {last_name}",
                                     weight=ft.FontWeight.BOLD,
-                                    color=TEXT,
+                                    color=DARK,
                                 ),
 
                                 ft.Text(
                                     f"@{username}",
                                     size=12,
-                                    color=TEXT_GRAY,
+                                    color=GRAY,
                                 ),
                             ],
                         ),
 
                         ft.CircleAvatar(
-                            bgcolor=PRIMARY,
+
                             radius=22,
+
+                            bgcolor=PRIMARY,
 
                             content=ft.Text(
                                 first_name[:1]
                                 if first_name
                                 else "U",
+
                                 color=WHITE,
+
                                 size=20,
                             ),
                         ),
@@ -1297,7 +836,6 @@ def dashboard_page(
             ],
         ),
     )
-
 
     # =====================================================
     # Footer
@@ -1309,7 +847,12 @@ def dashboard_page(
 
         bgcolor=WHITE,
 
-        padding=15,
+        padding=ft.Padding(
+            left=15,
+            right=15,
+            top=0,
+            bottom=0,
+        ),
 
         content=ft.Row(
 
@@ -1321,7 +864,7 @@ def dashboard_page(
                 ft.Text(
                     "© 2026 My Dashboard",
                     size=13,
-                    color=TEXT_GRAY,
+                    color=GRAY,
                 ),
 
                 ft.Text(
@@ -1332,15 +875,14 @@ def dashboard_page(
                 ft.Text(
                     "ساخته شده با Python و Flet",
                     size=13,
-                    color=TEXT_GRAY,
+                    color=GRAY,
                 ),
             ],
         ),
     )
 
-
     # =====================================================
-    # Main Layout
+    # Main Area
     # =====================================================
 
     main_area = ft.Column(
@@ -1354,14 +896,13 @@ def dashboard_page(
             # Header
             header,
 
-            # Central Area
+            # Center
             content_area,
 
             # Footer
             footer,
         ],
     )
-
 
     # =====================================================
     # Complete Dashboard
@@ -1383,9 +924,8 @@ def dashboard_page(
         ],
     )
 
-
     # =====================================================
-    # Show Dashboard
+    # Show
     # =====================================================
 
     page.controls.clear()
@@ -1396,5 +936,5 @@ def dashboard_page(
 
     page.update()
 
-    # نمایش صفحه اصلی داشبورد
+    # نمایش داشبورد
     show_dashboard()
