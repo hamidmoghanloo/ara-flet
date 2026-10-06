@@ -1,369 +1,683 @@
-import tkinter as tk
-from dataclasses import dataclass
-from decimal import Decimal, DivisionByZero, InvalidOperation, getcontext
+import re
+import flet as ft
 
-getcontext().prec = 18
+from user_data import USERS, CURRENT_USER, create_user
 
-
-@dataclass(frozen=True)
-class Button:
-    label: str
-    kind: str
-    column: int
-    row: int
-    span: int = 1
+from profile_page import show_profile
+from dashboard_page import show_dashboard
 
 
-class IPhoneCalculator(tk.Tk):
-    BLACK = "#000000"
-    NUMBER = "#333333"
-    NUMBER_PRESSED = "#737373"
-    UTILITY = "#A5A5A5"
-    UTILITY_PRESSED = "#D4D4D2"
-    ORANGE = "#FF9F0A"
-    ORANGE_PRESSED = "#FFD08A"
-    WHITE = "#FFFFFF"
+def main(page: ft.Page):
 
-    BUTTONS = (
-        Button("AC", "utility", 0, 0),
-        Button("±", "utility", 1, 0),
-        Button("%", "utility", 2, 0),
-        Button("÷", "operator", 3, 0),
-        Button("7", "number", 0, 1),
-        Button("8", "number", 1, 1),
-        Button("9", "number", 2, 1),
-        Button("×", "operator", 3, 1),
-        Button("4", "number", 0, 2),
-        Button("5", "number", 1, 2),
-        Button("6", "number", 2, 2),
-        Button("−", "operator", 3, 2),
-        Button("1", "number", 0, 3),
-        Button("2", "number", 1, 3),
-        Button("3", "number", 2, 3),
-        Button("+", "operator", 3, 3),
-        Button("0", "number", 0, 4, 2),
-        Button(".", "number", 2, 4),
-        Button("=", "operator", 3, 4),
-    )
+    page.title = "سامانه ورود و داشبورد"
+    page.padding = 0
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.bgcolor = "#F8FAFC"
 
-    def __init__(self):
-        super().__init__()
-        self.title("ماشین حساب")
-        self.geometry("390x700")
-        self.minsize(320, 520)
-        self.configure(bg=self.BLACK)
+    # --------------------------------------------------
+    # ابزارهای عمومی
+    # --------------------------------------------------
 
-        self.value = "0"
-        self.pending_value = None
-        self.pending_operator = None
-        self.last_operator = None
-        self.last_value = None
-        self.waiting_for_number = False
-        self.has_error = False
-        self.pressed_label = None
-        self.hit_areas = []
-
-        self.canvas = tk.Canvas(self, bg=self.BLACK, highlightthickness=0)
-        self.canvas.pack(fill="both", expand=True)
-
-        self.canvas.bind("<Configure>", lambda event: self.draw())
-        self.canvas.bind("<ButtonPress-1>", self.mouse_down)
-        self.canvas.bind("<ButtonRelease-1>", self.mouse_up)
-
-        self.bind("<Key>", self.keyboard)
-        self.bind("<BackSpace>", self.backspace)
-        self.bind("<Escape>", lambda event: self.press("AC"))
-
-        self.draw()
-
-    def draw(self):
-        width = max(self.canvas.winfo_width(), 320)
-        height = max(self.canvas.winfo_height(), 520)
-
-        self.canvas.delete("all")
-        self.hit_areas.clear()
-
-        margin = max(12, width * 0.042)
-        gap = max(8, width * 0.031)
-        display_height = height * 0.345
-        cell_width = (width - 2 * margin - 3 * gap) / 4
-        row_height = (height - display_height - margin - 4 * gap) / 5
-        size = min(cell_width, row_height - gap)
-
-        font_size = max(22, int(width * 0.17) - max(0, len(self.value) - 8) * 4)
-
-        self.canvas.create_text(
-            width - margin,
-            display_height - margin * 0.55,
-            text=self.value,
-            fill=self.WHITE,
-            anchor="se",
-            font=("Arial", font_size),
+    def primary_button(text, on_click):
+        return ft.Row(
+            controls=[
+                ft.FilledButton(
+                    content=text,
+                    on_click=on_click,
+                    expand=True,
+                    height=52,
+                    style=ft.ButtonStyle(
+                        bgcolor="#4F46E5",
+                        color="#FFFFFF",
+                        shape=ft.RoundedRectangleBorder(
+                            radius=14
+                        ),
+                    ),
+                )
+            ]
         )
 
-        for button in self.BUTTONS:
-            x1 = margin + button.column * (cell_width + gap)
-            y1 = display_height + button.row * (row_height + gap)
-            y1 += (row_height - size) / 2
-            x2 = x1 + cell_width * button.span + gap * (button.span - 1)
-            y2 = y1 + size
-
-            color, text_color = self.button_colors(button)
-
-            if button.span == 2:
-                self.draw_pill(x1, y1, x2, y2, color)
-                text_x = x1 + size / 2
-            else:
-                self.canvas.create_oval(x1, y1, x2, y2, fill=color, outline=color)
-                text_x = (x1 + x2) / 2
-
-            self.canvas.create_text(
-                text_x,
-                (y1 + y2) / 2,
-                text=button.label,
-                fill=text_color,
-                font=("Arial", max(18, int(size * 0.36))),
-            )
-
-            self.hit_areas.append(((x1, y1, x2, y2), button.label))
-
-    def draw_pill(self, x1, y1, x2, y2, color):
-        radius = (y2 - y1) / 2
-        self.canvas.create_rectangle(
-            x1 + radius, y1, x2 - radius, y2, fill=color, outline=color
-        )
-        self.canvas.create_oval(x1, y1, x1 + 2 * radius, y2, fill=color, outline=color)
-        self.canvas.create_oval(
-            x2 - 2 * radius, y1, x2, y2, fill=color, outline=color
+    def input_field(
+        label,
+        icon,
+        password=False,
+        on_change=None,
+        autofocus=False,
+    ):
+        return ft.TextField(
+            label=label,
+            prefix_icon=icon,
+            password=password,
+            can_reveal_password=password,
+            on_change=on_change,
+            autofocus=autofocus,
+            rtl=True,
+            text_align=ft.TextAlign.RIGHT,
+            height=58,
+            bgcolor="#F8FAFC",
+            filled=True,
+            border=ft.InputBorder.OUTLINE,
+            border_radius=14,
+            border_color="#E2E8F0",
+            focused_border_color="#4F46E5",
+            cursor_color="#4F46E5",
+            color="#0F172A",
         )
 
-    def button_colors(self, button):
-        if button.label == self.pending_operator and self.waiting_for_number:
-            return self.WHITE, self.ORANGE
-
-        pressed = button.label == self.pressed_label
-
-        if button.kind == "utility":
-            return (
-                self.UTILITY_PRESSED if pressed else self.UTILITY,
-                self.BLACK,
-            )
-
-        if button.kind == "operator":
-            return (
-                self.ORANGE_PRESSED if pressed else self.ORANGE,
-                self.WHITE,
-            )
-
-        return (
-            self.NUMBER_PRESSED if pressed else self.NUMBER,
-            self.WHITE,
+    def logo(icon):
+        return ft.Container(
+            width=70,
+            height=70,
+            border_radius=35,
+            bgcolor="#EEF2FF",
+            alignment=ft.Alignment.CENTER,
+            content=ft.Icon(
+                icon,
+                size=34,
+                color="#4F46E5",
+            ),
         )
 
-    def mouse_down(self, event):
-        self.pressed_label = self.button_at(event.x, event.y)
-        self.draw()
+    def create_screen(content):
+        return ft.Container(
+            expand=True,
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
+                colors=[
+                    "#EEF2FF",
+                    "#F5F3FF",
+                    "#E0F2FE",
+                ],
+            ),
+            content=ft.SafeArea(
+                expand=True,
+                content=ft.Column(
+                    expand=True,
+                    scroll=ft.ScrollMode.AUTO,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(
+                            width=430,
+                            margin=20,
+                            padding=32,
+                            bgcolor="#FFFFFF",
+                            border_radius=26,
+                            shadow=ft.BoxShadow(
+                                blur_radius=25,
+                                spread_radius=1,
+                                color="#220F172A",
+                                offset=ft.Offset(0, 10),
+                            ),
+                            content=content,
+                        )
+                    ],
+                ),
+            ),
+        )
 
-    def mouse_up(self, event):
-        clicked = self.button_at(event.x, event.y)
-        was_pressed = self.pressed_label
-        self.pressed_label = None
+    def show_screen(content):
+        page.controls.clear()
+        page.add(create_screen(content))
+        page.update()
 
-        if clicked and clicked == was_pressed:
-            self.press(clicked)
-        else:
-            self.draw()
+    # --------------------------------------------------
+    # قدرت رمز
+    # --------------------------------------------------
 
-    def button_at(self, x, y):
-        for (x1, y1, x2, y2), label in self.hit_areas:
-            if x1 <= x <= x2 and y1 <= y <= y2:
-                return label
-        return None
+    def password_score(password):
 
-    def keyboard(self, event):
-        mapping = {
-            "Return": "=",
-            "KP_Enter": "=",
-            "plus": "+",
-            "minus": "−",
-            "slash": "÷",
-            "asterisk": "×",
-            "percent": "%",
-        }
+        if not password:
+            return 0
 
-        key = mapping.get(event.keysym, event.char)
+        score = 0
 
-        if key and key in "0123456789.+-*/%=":
-            self.press({"-": "−", "*": "×", "/": "÷"}.get(key, key))
-            return "break"
+        score += len(password) >= 6
+        score += len(password) >= 8
+        score += bool(re.search(r"[a-z]", password))
+        score += bool(re.search(r"[A-Z]", password))
+        score += bool(re.search(r"\d", password))
+        score += bool(
+            re.search(r"[^A-Za-z0-9]", password)
+        )
 
-    def press(self, key):
-        if key.isdigit() or key == ".":
-            self.input_digit(key)
-        elif key in {"+", "−", "×", "÷"}:
-            self.input_operator(key)
-        elif key == "=":
-            self.equals()
-        elif key == "AC":
-            self.clear()
-        elif key == "±":
-            self.change_sign()
-        elif key == "%":
-            self.percent()
+        return score
 
-        self.draw()
+    # --------------------------------------------------
+    # Login
+    # --------------------------------------------------
 
-    def input_digit(self, digit):
-        if self.has_error or self.waiting_for_number:
-            self.value = "0"
-            self.has_error = False
-            self.waiting_for_number = False
+    def show_login():
 
-        if digit == ".":
-            if "." not in self.value:
-                self.value += "."
-            return
+        username = input_field(
+            "نام کاربری",
+            ft.Icons.PERSON,
+            autofocus=True,
+        )
 
-        if len(self.value.replace("-", "").replace(".", "")) >= 12:
-            return
+        password = input_field(
+            "رمز عبور",
+            ft.Icons.LOCK,
+            password=True,
+        )
 
-        if self.value == "0":
-            self.value = digit
-        elif self.value == "-0":
-            self.value = "-" + digit
-        else:
-            self.value += digit
+        error_text = ft.Text(
+            "",
+            size=13,
+            color="#DC2626",
+        )
 
-    def input_operator(self, operator):
-        if self.has_error:
-            return
+        def login(_):
 
-        current = self.current_number()
+            name = username.value.strip()
+            pwd = password.value
 
-        if self.pending_operator and not self.waiting_for_number:
-            result = self.calculate(self.pending_value, current, self.pending_operator)
-            if result is None:
-                return
-            self.pending_value = result
-            self.value = self.format_number(result)
-        else:
-            self.pending_value = current
-
-        self.pending_operator = operator
-        self.waiting_for_number = True
-
-    def equals(self):
-        if self.has_error:
-            return
-
-        if self.pending_operator:
-            right = self.pending_value if self.waiting_for_number else self.current_number()
-            result = self.calculate(self.pending_value, right, self.pending_operator)
-
-            if result is None:
+            if not name or not pwd:
+                error_text.value = (
+                    "نام کاربری و رمز عبور را وارد کنید."
+                )
+                page.update()
                 return
 
-            self.last_operator = self.pending_operator
-            self.last_value = right
-            self.value = self.format_number(result)
-            self.pending_value = None
-            self.pending_operator = None
-            self.waiting_for_number = True
+            if USERS.get(name) != pwd:
+                error_text.value = (
+                    "حسابی با این اطلاعات پیدا نشد."
+                )
+                page.update()
+                return
 
-        elif self.last_operator and self.last_value is not None:
-            result = self.calculate(
-                self.current_number(),
-                self.last_value,
-                self.last_operator,
+            CURRENT_USER["username"] = name
+
+            show_welcome()
+
+        password.on_submit = login
+
+        show_screen(
+            ft.Column(
+                tight=True,
+                rtl=True,
+                horizontal_alignment=(
+                    ft.CrossAxisAlignment.CENTER
+                ),
+                spacing=15,
+                controls=[
+
+                    logo(ft.Icons.LOCK),
+
+                    ft.Text(
+                        "خوش آمدید",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                        color="#0F172A",
+                    ),
+
+                    ft.Text(
+                        "برای ورود، اطلاعات حساب خود را وارد کنید.",
+                        size=14,
+                        color="#64748B",
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+
+                    ft.Container(height=8),
+
+                    username,
+
+                    password,
+
+                    error_text,
+
+                    primary_button(
+                        "ورود به حساب",
+                        login,
+                    ),
+
+                    ft.Divider(
+                        color="#E2E8F0"
+                    ),
+
+                    ft.Row(
+                        alignment=(
+                            ft.MainAxisAlignment.CENTER
+                        ),
+                        controls=[
+
+                            ft.Text(
+                                "حساب کاربری ندارید؟",
+                                color="#64748B",
+                            ),
+
+                            ft.TextButton(
+                                content="ثبت نام",
+                                on_click=lambda _: (
+                                    show_register()
+                                ),
+                                style=ft.ButtonStyle(
+                                    color="#4F46E5"
+                                ),
+                            ),
+                        ],
+                    ),
+                ],
             )
-
-            if result is not None:
-                self.value = self.format_number(result)
-                self.waiting_for_number = True
-
-    def calculate(self, left, right, operator):
-        if left is None or right is None:
-            return None
-
-        try:
-            if operator == "+":
-                result = left + right
-            elif operator == "−":
-                result = left - right
-            elif operator == "×":
-                result = left * right
-            else:
-                result = left / right
-
-            if not result.is_finite() or abs(result) > Decimal("999999999999"):
-                raise InvalidOperation
-
-            return result
-
-        except (DivisionByZero, InvalidOperation, ZeroDivisionError):
-            self.value = "Error"
-            self.has_error = True
-            self.pending_operator = None
-            self.pending_value = None
-            return None
-
-    def clear(self):
-        self.value = "0"
-        self.pending_value = None
-        self.pending_operator = None
-        self.last_operator = None
-        self.last_value = None
-        self.waiting_for_number = False
-        self.has_error = False
-
-    def change_sign(self):
-        if self.has_error or self.value in {"0", "0."}:
-            return
-
-        self.value = (
-            self.value[1:]
-            if self.value.startswith("-")
-            else "-" + self.value
         )
 
-    def percent(self):
-        if self.has_error:
+    # --------------------------------------------------
+    # Register
+    # --------------------------------------------------
+
+    def show_register():
+
+        username = input_field(
+            "نام کاربری",
+            ft.Icons.PERSON,
+            autofocus=True,
+        )
+
+        password = input_field(
+            "رمز عبور",
+            ft.Icons.LOCK,
+            password=True,
+        )
+
+        confirm_password = input_field(
+            "تکرار رمز عبور",
+            ft.Icons.LOCK,
+            password=True,
+        )
+
+        strength_text = ft.Text(
+            "قدرت رمز: هنوز رمزی وارد نشده",
+            size=13,
+            color="#64748B",
+        )
+
+        dots = ft.Row(
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=8,
+            controls=[
+                ft.Container(
+                    width=14,
+                    height=14,
+                    border_radius=14,
+                    bgcolor="#E2E8F0",
+                )
+                for _ in range(6)
+            ],
+        )
+
+        error_text = ft.Text(
+            "",
+            size=13,
+            color="#DC2626",
+        )
+
+        levels = [
+            "",
+            "خیلی ضعیف",
+            "ضعیف",
+            "متوسط",
+            "خوب",
+            "قوی",
+            "خیلی قوی",
+        ]
+
+        def update_strength(_):
+
+            score = password_score(
+                password.value
+            )
+
+            if score == 0:
+
+                strength_text.value = (
+                    "قدرت رمز: هنوز رمزی وارد نشده"
+                )
+
+            else:
+
+                strength_text.value = (
+                    f"قدرت رمز: {levels[score]} "
+                    f"({score} از 6)"
+                )
+
+            for index, dot in enumerate(
+                dots.controls
+            ):
+
+                dot.bgcolor = (
+                    "#22C55E"
+                    if index < score
+                    else "#E2E8F0"
+                )
+
+            page.update()
+
+        password.on_change = update_strength
+
+        def register(_):
+
+            name = username.value.strip()
+
+            pwd = password.value
+
+            confirm = confirm_password.value
+
+            if len(name) < 3:
+
+                error_text.value = (
+                    "نام کاربری باید حداقل ۳ کاراکتر باشد."
+                )
+
+                page.update()
+
+                return
+
+            if name in USERS:
+
+                error_text.value = (
+                    "این نام کاربری قبلاً ثبت شده است."
+                )
+
+                page.update()
+
+                return
+
+            if len(pwd) < 6:
+
+                error_text.value = (
+                    "رمز عبور باید حداقل ۶ کاراکتر باشد."
+                )
+
+                page.update()
+
+                return
+
+            if pwd != confirm:
+
+                error_text.value = (
+                    "تکرار رمز عبور درست نیست."
+                )
+
+                page.update()
+
+                return
+
+            # ساخت کاربر
+            create_user(
+                username=name,
+                password=pwd,
+            )
+
+            CURRENT_USER["username"] = name
+
+            # بعد از ثبت نام → Welcome
+            show_welcome()
+
+        confirm_password.on_submit = register
+
+        show_screen(
+            ft.Column(
+                tight=True,
+                rtl=True,
+                horizontal_alignment=(
+                    ft.CrossAxisAlignment.CENTER
+                ),
+                spacing=14,
+                controls=[
+
+                    logo(
+                        ft.Icons.PERSON_ADD
+                    ),
+
+                    ft.Text(
+                        "ساخت حساب کاربری",
+                        size=27,
+                        weight=ft.FontWeight.BOLD,
+                        color="#0F172A",
+                    ),
+
+                    ft.Text(
+                        "اطلاعات زیر را وارد کنید تا حساب شما ساخته شود.",
+                        size=14,
+                        color="#64748B",
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+
+                    ft.Container(height=6),
+
+                    username,
+
+                    password,
+
+                    ft.Column(
+                        tight=True,
+                        horizontal_alignment=(
+                            ft.CrossAxisAlignment.CENTER
+                        ),
+                        spacing=8,
+                        controls=[
+                            dots,
+                            strength_text,
+                        ],
+                    ),
+
+                    confirm_password,
+
+                    error_text,
+
+                    primary_button(
+                        "ثبت نام و ادامه",
+                        register,
+                    ),
+
+                    ft.Row(
+                        alignment=(
+                            ft.MainAxisAlignment.CENTER
+                        ),
+                        controls=[
+
+                            ft.Text(
+                                "قبلاً ثبت نام کرده‌اید؟",
+                                color="#64748B",
+                            ),
+
+                            ft.TextButton(
+                                content="ورود",
+                                on_click=lambda _: (
+                                    show_login()
+                                ),
+                                style=ft.ButtonStyle(
+                                    color="#4F46E5"
+                                ),
+                            ),
+                        ],
+                    ),
+                ],
+            )
+        )
+
+    # --------------------------------------------------
+    # Welcome
+    # --------------------------------------------------
+
+    def show_welcome():
+
+        username = CURRENT_USER["username"]
+
+        def go_profile(_):
+            show_user_profile()
+
+        def go_dashboard(_):
+            show_user_dashboard()
+
+        def logout(_):
+
+            CURRENT_USER["username"] = ""
+
+            show_login()
+
+        show_screen(
+            ft.Column(
+                tight=True,
+                rtl=True,
+                horizontal_alignment=(
+                    ft.CrossAxisAlignment.CENTER
+                ),
+                spacing=18,
+                controls=[
+
+                    ft.Container(
+                        width=82,
+                        height=82,
+                        border_radius=41,
+                        bgcolor="#DCFCE7",
+                        alignment=ft.Alignment.CENTER,
+                        content=ft.Icon(
+                            ft.Icons.CHECK_CIRCLE,
+                            size=46,
+                            color="#16A34A",
+                        ),
+                    ),
+
+                    ft.Text(
+                        f"سلام {username} 👋",
+                        size=29,
+                        weight=ft.FontWeight.BOLD,
+                        color="#0F172A",
+                    ),
+
+                    ft.Text(
+                        "ورود شما با موفقیت انجام شد.",
+                        size=15,
+                        color="#64748B",
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+
+                    ft.Container(
+                        padding=22,
+                        border_radius=18,
+                        bgcolor="#F8FAFC",
+                        content=ft.Column(
+                            tight=True,
+                            horizontal_alignment=(
+                                ft.CrossAxisAlignment.CENTER
+                            ),
+                            spacing=8,
+                            controls=[
+
+                                ft.Icon(
+                                    ft.Icons.VERIFIED_USER,
+                                    size=28,
+                                    color="#4F46E5",
+                                ),
+
+                                ft.Text(
+                                    "حساب کاربری شما آماده است",
+                                    weight=(
+                                        ft.FontWeight.BOLD
+                                    ),
+                                    color="#334155",
+                                ),
+
+                                ft.Text(
+                                    "برای ادامه می‌توانید اطلاعات پروفایل خود را تکمیل کنید.",
+                                    size=12,
+                                    color="#64748B",
+                                    text_align=(
+                                        ft.TextAlign.CENTER
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
+
+                    primary_button(
+                        "تکمیل اطلاعات پروفایل",
+                        go_profile,
+                    ),
+
+                    ft.OutlinedButton(
+                        content="رفتن به داشبورد",
+                        icon=ft.Icons.DASHBOARD,
+                        on_click=go_dashboard,
+                        height=50,
+                        width=390,
+                        style=ft.ButtonStyle(
+                            color="#4F46E5",
+                            side=ft.BorderSide(
+                                1,
+                                "#4F46E5",
+                            ),
+                            shape=(
+                                ft.RoundedRectangleBorder(
+                                    radius=14
+                                )
+                            ),
+                        ),
+                    ),
+
+                    ft.TextButton(
+                        content="خروج از حساب",
+                        on_click=logout,
+                        style=ft.ButtonStyle(
+                            color="#DC2626"
+                        ),
+                    ),
+                ],
+            )
+        )
+
+    # --------------------------------------------------
+    # Profile
+    # --------------------------------------------------
+
+    def show_user_profile():
+
+        username = CURRENT_USER["username"]
+
+        show_profile(
+            page=page,
+            username=username,
+            on_saved=show_user_dashboard,
+            on_back=show_welcome,
+        )
+
+    # --------------------------------------------------
+    # Dashboard
+    # --------------------------------------------------
+
+    def show_user_dashboard():
+
+        username = CURRENT_USER["username"]
+
+        if not username:
+            show_login()
             return
 
-        number = self.current_number()
+        show_dashboard(
+            page=page,
+            username=username,
+            on_profile=show_user_profile,
+            on_logout=logout_user,
+        )
 
-        if self.pending_value is not None and self.pending_operator in {"+", "−"}:
-            number = self.pending_value * number / Decimal("100")
-        else:
-            number /= Decimal("100")
+    # --------------------------------------------------
+    # Logout
+    # --------------------------------------------------
 
-        self.value = self.format_number(number)
+    def logout_user():
 
-    def backspace(self, event=None):
-        if not self.has_error and not self.waiting_for_number:
-            self.value = self.value[:-1]
+        CURRENT_USER["username"] = ""
 
-            if self.value in {"", "-"}:
-                self.value = "0"
+        show_login()
 
-            self.draw()
+    # --------------------------------------------------
+    # شروع برنامه
+    # --------------------------------------------------
 
-        return "break"
-
-    def current_number(self):
-        try:
-            return Decimal(self.value)
-        except InvalidOperation:
-            return Decimal(0)
-
-    @staticmethod
-    def format_number(number):
-        if number == number.to_integral():
-            return format(number, ".0f")
-
-        text = format(number, ".12f").rstrip("0").rstrip(".")
-        return text if len(text.replace("-", "")) <= 12 else format(number, ".8g")
+    show_login()
 
 
 if __name__ == "__main__":
-    IPhoneCalculator().mainloop()
+    ft.run(main)
