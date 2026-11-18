@@ -1,1 +1,3 @@
 PySide6>=6.6.0
+psycpg-binary>=2.9.13
+
