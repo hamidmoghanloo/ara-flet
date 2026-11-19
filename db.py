@@ -4,7 +4,6 @@ import hashlib
 import secrets
 import hmac
 from contextlib import contextmanager
-
 import psycopg2
 from psycopg2 import errors
 
@@ -14,11 +13,11 @@ from psycopg2 import errors
 # ==========================================
 
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", "5432")),
-    "dbname": os.getenv("DB_NAME", "users_db"),
-    "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "12345678"),
+    "host": os.getenv("DB_HOST", ""),
+    "port": int(os.getenv("DB_PORT", "")),
+    "dbname": os.getenv("DB_NAME", ""),
+    "user": os.getenv("DB_USER", ""),
+    "password": os.getenv("DB_PASSWORD", ""),
 }
 
 
