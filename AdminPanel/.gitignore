@@ -1,0 +1,5 @@
+.env
+venv/
+__pycache__/
+*.py[cod]
+assets/captcha/captcha_*.png
