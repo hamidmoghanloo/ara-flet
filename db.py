@@ -16,9 +16,9 @@ from psycopg2 import errors
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
     "port": int(os.getenv("DB_PORT", "5432")),
-    "dbname": os.getenv("DB_NAME", "########"),
+    "dbname": os.getenv("DB_NAME", "users_db"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "#########"),
+    "password": os.getenv("DB_PASSWORD", "12345678"),
 }
 
 
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         init_db()
 
         print("PostgreSQL connected successfully!")
-        print("Total registered users:", count_users())
+        print("mother fucker you get connected:", count_users())
 
     except psycopg2.Error as error:
-        print("Database connection failed:", error)
+        print("dumbass your connection failed:", error)
