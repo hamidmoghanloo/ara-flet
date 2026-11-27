@@ -7,6 +7,9 @@ from contextlib import contextmanager
 
 import psycopg2
 from psycopg2 import errors
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # ==========================================
@@ -14,11 +17,11 @@ from psycopg2 import errors
 # ==========================================
 
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
+    "host": os.getenv("DB_HOST", "127.0.0.1"),
     "port": int(os.getenv("DB_PORT", "5432")),
     "dbname": os.getenv("DB_NAME", "users_db"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "12345678"),
+    "password": os.getenv("DB_PASSWORD"),
 }
 
 
